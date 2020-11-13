@@ -8,108 +8,99 @@ class Position {
     minX;
     maxY;
     maxX;
-    initPlayerX;
-    initPlayerY;
+    initX;
+    initY;
     x;
     y;
-    speed = Math.floor(Math.random(3) * (6 - 3 + 1)) + 3;
 
     constructor( row, col ) {
-        this.initPlayerX = (cellWidth * col) - (cellWidth);
-        this.initPlayerY = (cellHeight * row) - (cellHeight / 2);
-        this.x = this.initPlayerX;
-        this.y = this.initPlayerY;
-
+        this.initX = (cellWidth * col) - (cellWidth);
+        this.initY = (cellHeight * row) - (cellHeight / 2);
+        this.x = this.initX;
+        this.y = this.initY;
         this.maxY = cellHeight * (totalRow - 1);
         this.maxX = cellWidth * (totalCol - 1);
-        this.minY = -41.5;
+        this.minY = cellHeight * (row - 1) - this.initY;
         this.minX = 0;
     }
 
-    addRow() {
+    reset() {
+        this.x = this.initX;
+        this.y = this.initY;
+    }
+
+}
+
+class PositionEnemy extends Position {
+
+    run(speed, dt) {
+        this.x += (speed * dt); 
+    }
+
+}
+
+class PositionPlayer extends Position {
+
+    moveUp() {
         let newLocY = this.y - cellHeight;
         if (newLocY >= this.minY) {
             this.y = newLocY; 
         }
-    };
-    removeRow() {
+    }
+
+    moveDown() {
         let newLocY = this.y + cellHeight;
         if (newLocY <= this.maxY) {
             this.y = newLocY; 
         }
-    };
-    addCol() {
+    }
+
+    moveRigtht() {
         let newLocX = this.x + cellWidth;
         if (newLocX <= this.maxX) {
             this.x = newLocX; 
         }
-    };
-    removeCol() {
+    }
+
+    moveLeft() {
         let newLocX = this.x - cellWidth;
         if (newLocX >= this.minX) {
             this.x = newLocX; 
         }
     }
-    reset() {
-        this.x = this.initPlayerX;
-        this.y = this.initPlayerY;
-    }
-    run(dt) {
-        if (this.x <= this.maxX) {
-            (this.x += this.speed) * dt ;
-        } else {
-            this.x = 0;
-        }
-    }
-};
+}
 
-// Enemies our player must avoid
 class Enemy {
-    // Variables applied to each of our instances go here,
-    // we've provided one for you to get started
+
+    speed = (Math.floor(Math.random(3) * (400 - 100 + 1)) + 100);
     sprite = 'images/enemy-bug.png';
 
-    constructor ( Position ) {
-        this.position = Position;
+    constructor ( PositionEnemy ) {
+        this.position = PositionEnemy;
     }
 
-    // The image/sprite for our enemies, this uses
-    // a helper we've provided to easily load images
-    
-};
+    update (dt) {
+        if (this.position.x <= this.position.maxX) {
+            this.position.run(this.speed, dt);
+        } else {
+            this.position.reset();
+        }
+        
+    }
 
-// Update the enemy's position, required method for game
-// Parameter: dt, a time delta between ticks
-Enemy.prototype.update = function(dt) {
-    this.position.run(dt);
-    // You should multiply any movement by the dt parameter
-    // which will ensure the game runs at the same speed for
-    // all computers.
-};
+    render = function() {
+        ctx.drawImage(Resources.get(this.sprite), this.position.x, this.position.y);
+    }
 
-// Draw the enemy on the screen, required method for game
-Enemy.prototype.render = function() {
-    ctx.drawImage(Resources.get(this.sprite), this.position.x, this.position.y);
-};
-
-// Now write your own player class
-// This class requires an update(), render() and
-// a handleInput() method.
-
+}
 
 class Player {
     sprite = 'images/char-horn-girl.png';
-    position;
 
-    constructor ( Position ) {
-        this.position = Position;
+    constructor ( PositionPlayer ) {
+        this.position = PositionPlayer;
     }
 
-    // checkCollisions(enemy) {
-    //     if ( this.position.x == enemy.position.x && this.position.y == enemy.position.y ) {
-    //         this.position.reset();
-    //     }
-    // }
     win() {
         if (this.position.y == this.position.minY) {
             setTimeout(() => {
@@ -118,58 +109,61 @@ class Player {
             }, 0);
         }
     }
-}    
 
-Player.prototype.update = function() {
-    this.win();
-};
-
-Player.prototype.handleInput = function(keyCode) {
-
-    switch(keyCode) {
-        case 'up': 
-            this.position.addRow();
-            break;
-        case 'down': 
-            this.position.removeRow();
-            break;
-        case 'right': 
-            this.position.addCol();
-            break;
-        case 'left': 
-            this.position.removeCol();
-            break;
-        default: 
-            break;
+    update () {
+        this.win();
     }
 
-};
+    handleInput (keyCode) {
 
-Player.prototype.render = function() {
-    ctx.drawImage(Resources.get(this.sprite), this.position.x, this.position.y);
-};
+        switch(keyCode) {
+            case 'up': 
+                this.position.moveUp();
+                break;
+            case 'down': 
+                this.position.moveDown();
+                break;
+            case 'right': 
+                this.position.moveRigtht();
+                break;
+            case 'left': 
+                this.position.moveLeft();
+                break;
+            default: 
+                break;
+        }
+    
+    }
 
-// Now instantiate your objects.
-// Place all enemy objects in an array called allEnemies
-// Place the player object in a variable called player
+    render () {
+        ctx.drawImage(Resources.get(this.sprite), this.position.x, this.position.y);
+    }
+
+}    
+
 let allEnemies = [
-    enemy1 = new Enemy (new Position ( 1, 0 )),
-    enemy2 = new Enemy (new Position ( 2, 0 )),
-    enemy3 = new Enemy (new Position ( 3, 0 )),
+    enemy = new Enemy (new PositionEnemy ( 1, 0 )),
+    enemy = new Enemy (new PositionEnemy ( 2, 0 )),
+    enemy = new Enemy (new PositionEnemy ( 3, 0 )),
 ];
 
-let player = new Player( new Position( 5, 3 ) );
+let player = new Player( new PositionPlayer( 5, 3 ) );
 
 function checkCollisions() {
+
     allEnemies.forEach(function(enemy) {
-        if (enemy.position.x == player.position.x && enemy.position.y == player.position.y) {
-            return player.position.reset()
+        let checkDiffPlayerX = player.position.x - enemy.position.x < (cellWidth / 2) && player.position.x - enemy.position.x >= 0;
+        let checkDiffEnemyX = enemy.position.x - player.position.x < (cellWidth / 2) && enemy.position.x - player.position.x >= 0;
+        let checkEqualY = player.position.y === enemy.position.y;
+
+        if ((checkDiffPlayerX && checkEqualY) || ( checkDiffEnemyX && checkEqualY)) {
+            
+            return player.position.reset();
         }
     });
+
 }
-checkCollisions();
-// This listens for key presses and sends the keys to your
-// Player.handleInput() method. You don't need to modify this.
+
 document.addEventListener('keyup', function(e) {
     let allowedKeys = {
         37: 'left',
